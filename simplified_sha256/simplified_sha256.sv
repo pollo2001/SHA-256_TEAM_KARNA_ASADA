@@ -1,3 +1,4 @@
+
 module simplified_sha256 #(parameter integer NUM_OF_WORDS = 20)(
  input logic  clk, reset_n, start,
  input logic  [15:0] message_addr, output_addr,
@@ -71,14 +72,6 @@ begin
 end
 endfunction
 
-function logic [31:0] wi(input logic [31:0] w15, w2, w16, w7);
-	logic [31:0] S1, S0;
-	begin
-		S0 = rightrotate(w15, 7) ^ rightrotate(w15, 18) ^ (w15 >> 3);
-		S1 = rightrotate(w2, 17) ^ rightrotate(w2, 19) ^ (w2 >> 10);
-		wi = w16 + S0 + w7 + S1;
-	end
-endfunction	
 // Generate request to memory
 // for reading from memory to get original message
 // for writing final computed has value
@@ -138,7 +131,7 @@ begin
 
 	 PREP:begin
 		state <= READ;
-    end
+    end 
 	 
 	  READ: begin
 		if(offset < (num_blocks * 16)) begin
@@ -146,6 +139,7 @@ begin
 				begin
 					message[offset] <= mem_read_data;
 					offset <= offset + 1;
+					state <= PREP;
 				end
 			else begin
 				if(offset == NUM_OF_WORDS) begin
@@ -181,7 +175,10 @@ begin
 						state <= BLOCK;
 					end
 					else begin
-						w[i] <= wi(w[i-15], w[i-2], w[i-16], w[i-7]);
+						logic [31:0] temp1, temp0;
+						temp0 = rightrotate(w[i-15], 7) ^ rightrotate(w[i-15], 18) ^ (w[i-15] >> 3);
+						temp1 = rightrotate(w[i-2], 17) ^ rightrotate(w[i-2], 19) ^ (w[i-2] >> 10);
+						w[i] = w[i-16] + temp0 + w[i-7] + temp1;
 						i <= i + 1;
 						state <= BLOCK;
 					end
